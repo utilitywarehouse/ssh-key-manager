@@ -174,22 +174,21 @@ func submit(adminClient *http.Client) http.Handler {
 			resp.Body.Close()
 		}()
 
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		bodyStr := buf.String()
 		if err != nil {
-			log.Printf("Failed to PUT update user: %s in google with ssh key", err)
+			log.Printf("Failed to make a PUT request to update user: %s in google with ssh key", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		if resp.StatusCode != 200 {
-			log.Printf("Got: %d calling %s", resp.StatusCode, userKeysUri)
+			log.Printf("Got: %d calling: %s body: %s", resp.StatusCode, userKeysUri, bodyStr)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		bodyStr := buf.String()
 		if !strings.Contains(bodyStr, key) {
-			log.Printf("PUT happened, but didn't return the new value for the ssh key: %s", key)
+			log.Printf("PUT happened, but didn't return the new value for the ssh key: %s body: %s", key, bodyStr)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
