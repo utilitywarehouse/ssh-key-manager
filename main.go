@@ -143,7 +143,7 @@ func googleCallback() http.Handler {
 			return
 		}
 
-		_, err = w.Write([]byte(fmt.Sprintf(form, tokResponse.AccessToken)))
+		_, err = fmt.Fprintf(w, form, tokResponse.AccessToken)
 		if err != nil {
 			log.Println("failed to write about response")
 			w.WriteHeader(http.StatusInternalServerError)
@@ -176,24 +176,24 @@ func submit(adminClient *http.Client) http.Handler {
 
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
-		bodyStr := buf.String()
+		body := buf.Bytes()
 		if err != nil {
 			log.Printf("Failed to make a PUT request to update user: %s in google with ssh key", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		if resp.StatusCode != 200 {
-			log.Printf("Got: %d calling: %s body: %s", resp.StatusCode, userKeysUri, bodyStr)
+			log.Printf("Got: %d calling: %s body: %s", resp.StatusCode, userKeysUri, body)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		if !strings.Contains(bodyStr, key) {
-			log.Printf("PUT happened, but didn't return the new value for the ssh key: %s body: %s", key, bodyStr)
+		if !bytes.Contains(body, []byte(key)) {
+			log.Printf("PUT happened, but didn't return the new value for the ssh key: %s body: %s", key, body)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		_, err = w.Write([]byte(fmt.Sprintf("Successfully set ssh public key: %s", key)))
+		_, err = fmt.Fprintf(w, "Successfully set ssh public key: %s", key)
 		if err != nil {
 			log.Println("failed to write sucessful user key update response")
 			w.WriteHeader(http.StatusInternalServerError)
