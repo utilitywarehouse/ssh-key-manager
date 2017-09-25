@@ -37,7 +37,7 @@ const (
 <html>
 <body>
 <form action="/submit">
-  *public* ssh key<br>
+  *public* ed25519 ssh key (500 chars or less)<br>
   <input type="text" name="key"><br>
   <input type="hidden" name="token" value="%s">
   <input type="submit" value="Submit">
@@ -152,9 +152,26 @@ func googleCallback() http.Handler {
 	})
 }
 
+func validateKey(key string) error {
+	if !strings.HasPrefix(key, "ssh-ed25519") {
+		return fmt.Errorf("The key is not a ssh-ed25519 key")
+	}
+	if len(key) > 500 {
+		return fmt.Errorf("The key string must be less then 500 chars")
+	}
+	return nil
+}
+
 func submit(adminClient *http.Client) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		key := r.FormValue("key")
+		err := validateKey(key)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			_, err = fmt.Fprintf(w, err.Error())
+			return
+		}
+
 		token := r.FormValue("token")
 
 		email, err := getUserEmail(token)
