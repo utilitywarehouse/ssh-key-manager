@@ -37,7 +37,7 @@ const (
 <html>
 <body>
 <form action="/submit">
-  *public* ed25519 ssh key (500 chars or less)<br>
+  *public* ed25519 or ecdsa ssh key (500 chars or less)<br>
   <input type="text" name="key"><br>
   <input type="hidden" name="token" value="%s">
   <input type="submit" value="Submit">
@@ -153,8 +153,8 @@ func googleCallback() http.Handler {
 }
 
 func validateKey(key string) error {
-	if !strings.HasPrefix(key, "ssh-ed25519") {
-		return fmt.Errorf("The key is not a ssh-ed25519 key")
+	if !strings.HasPrefix(key, "ssh-ed25519") && !strings.HasPrefix(key, "ecdsa-sha2-nistp256") {
+		return fmt.Errorf("The key must be [ssh-ed25519|ecdsa-sha2-nistp256] key")
 	}
 	if len(key) > 500 {
 		return fmt.Errorf("The key string must be less then 500 chars")
