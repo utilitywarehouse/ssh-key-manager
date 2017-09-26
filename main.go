@@ -19,12 +19,13 @@ import (
 )
 
 var (
-	clientID     = os.Getenv("CLIENT_ID")
-	clientSecret = os.Getenv("CLIENT_SECRET")
-	callbackURL  = os.Getenv("CALLBACK_URL")
-	saKeyLoc     = os.Getenv("SA_KEY_LOC")
+	clientID     = os.Getenv("SKM_CLIENT_ID")
+	clientSecret = os.Getenv("SKM_CLIENT_SECRET")
+	callbackURL  = os.Getenv("SKM_CALLBACK_URL")
+	saKeyLoc     = os.Getenv("SKM_SA_KEY_LOC")
+	groups       = os.Getenv("SKM_GROUPS")
 
-	scopes = []string{"https://www.googleapis.com/auth/admin.directory.user"}
+	scopes = []string{"https://www.googleapis.com/auth/admin.directory.user", "https://www.googleapis.com/auth/admin.directory.group.member.readonly"}
 )
 
 const (
@@ -181,6 +182,10 @@ func submit(adminClient *http.Client) http.Handler {
 			return
 		}
 
+		// strip the comment and replace with email
+		keyParts := strings.Split(key, " ")
+		key = keyParts[0] + " " + keyParts[1] + " " + email
+
 		userKeysUri := fmt.Sprintf("%s/%s", adminUserURL, email)
 		req, err := http.NewRequest(http.MethodPut, userKeysUri, strings.NewReader(fmt.Sprintf(sshKeyPostBody, key)))
 		req.Header.Set("content-type", "application/json")
@@ -227,6 +232,7 @@ func main() {
 	m.Handle("/", googleRedirect())
 	m.Handle("/callback", googleCallback())
 	m.Handle("/submit", submit(adminClient))
+	m.Handle("/authmap", authmap(adminClient, strings.Split(groups, ",")))
 
 	http.Handle("/__/", op.NewHandler(
 		op.NewStatus("Google ssh key manager", "Allows users to set their ssh keys and maintains a list of users/groups/keys in s3.").
