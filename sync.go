@@ -79,8 +79,8 @@ func authmap(adminClient *http.Client, groups []string) http.Handler {
 			}
 			rtnGroups = append(rtnGroups, group)
 		}
-		bd, _ := json.Marshal(rtnGroups)
-		fmt.Fprintf(w, "%s", bd)
+		enc := json.NewEncoder(w)
+		enc.Encode(rtnGroups)
 		return
 	})
 }
