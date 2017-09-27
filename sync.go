@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -47,17 +50,26 @@ func authmap(adminClient *http.Client, groups []string) http.Handler {
 			group := Group{Name: g, Keys: []string{}}
 			req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf(adminGroupMembersURI, g), nil)
 			resp, _ := adminClient.Do(req)
-			buf := new(bytes.Buffer)
-			buf.ReadFrom(resp.Body)
-			body := buf.Bytes()
+			defer func() {
+				io.Copy(ioutil.Discard, resp.Body)
+				resp.Body.Close()
+			}()
 
-			json.Unmarshal(body, &memList)
+			dec := json.NewDecoder(resp.Body)
+			err := dec.Decode(&memList)
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			// fetch each user's key + append to map
 			for _, m := range memList.Members {
 				var adminUser GoogleAdminUser
 				req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf(adminUserURI, m.Email), nil)
 				resp, _ := adminClient.Do(req)
+				defer func() {
+					io.Copy(ioutil.Discard, resp.Body)
+					resp.Body.Close()
+				}()
 				buf := new(bytes.Buffer)
 				buf.ReadFrom(resp.Body)
 				body := buf.Bytes()

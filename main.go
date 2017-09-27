@@ -55,7 +55,7 @@ type UserInfo struct {
 type TokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
-	IdToken      string `json:"id_token"`
+	IDToken      string `json:"id_token"`
 }
 
 // Get the id_token and refresh_token from google
@@ -186,8 +186,8 @@ func submit(adminClient *http.Client) http.Handler {
 		keyParts := strings.Split(key, " ")
 		key = keyParts[0] + " " + keyParts[1] + " " + email
 
-		userKeysUri := fmt.Sprintf("%s/%s", adminUserURL, email)
-		req, err := http.NewRequest(http.MethodPut, userKeysUri, strings.NewReader(fmt.Sprintf(sshKeyPostBody, key)))
+		userKeysURI := fmt.Sprintf("%s/%s", adminUserURL, email)
+		req, err := http.NewRequest(http.MethodPut, userKeysURI, strings.NewReader(fmt.Sprintf(sshKeyPostBody, key)))
 		req.Header.Set("content-type", "application/json")
 
 		resp, err := adminClient.Do(req)
@@ -205,7 +205,7 @@ func submit(adminClient *http.Client) http.Handler {
 			return
 		}
 		if resp.StatusCode != 200 {
-			log.Printf("Got: %d calling: %s body: %s", resp.StatusCode, userKeysUri, body)
+			log.Printf("Got: %d calling: %s body: %s", resp.StatusCode, userKeysURI, body)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
