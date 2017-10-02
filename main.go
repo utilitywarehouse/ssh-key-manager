@@ -19,11 +19,14 @@ import (
 )
 
 var (
-	clientID     = os.Getenv("SKM_CLIENT_ID")
-	clientSecret = os.Getenv("SKM_CLIENT_SECRET")
-	callbackURL  = os.Getenv("SKM_CALLBACK_URL")
-	saKeyLoc     = os.Getenv("SKM_SA_KEY_LOC")
-	groups       = os.Getenv("SKM_GROUPS")
+	googleClientID     = os.Getenv("SKM_CLIENT_ID")
+	googleClientSecret = os.Getenv("SKM_CLIENT_SECRET")
+	googleCallbackURL  = os.Getenv("SKM_CALLBACK_URL")
+	awsAccessKey       = os.Getenv("SKM_AWS_ACCESS_KEY_ID")
+	awsSecretKey       = os.Getenv("SKM_AWS_SECRET_ACCESS_KEY")
+	awsBucket          = os.Getenv("SKM_AWS_BUCKET")
+	saKeyLoc           = os.Getenv("SKM_SA_KEY_LOC")
+	groups             = os.Getenv("SKM_GROUPS")
 
 	scopes = []string{"https://www.googleapis.com/auth/admin.directory.user", "https://www.googleapis.com/auth/admin.directory.group.member.readonly"}
 )
@@ -62,7 +65,7 @@ type TokenResponse struct {
 func getTokens(clientID, clientSecret, code string) (*TokenResponse, error) {
 	val := url.Values{}
 	val.Add("grant_type", "authorization_code")
-	val.Add("redirect_uri", callbackURL)
+	val.Add("redirect_uri", googleCallbackURL)
 	val.Add("client_id", clientID)
 	val.Add("client_secret", clientSecret)
 	val.Add("code", code)
@@ -76,7 +79,7 @@ func getTokens(clientID, clientSecret, code string) (*TokenResponse, error) {
 		resp.Body.Close()
 	}()
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Got: %d calling %s", resp.StatusCode, tokenURL)
+		return nil, fmt.Errorf("google - unexpected response: %d calling %s", resp.StatusCode, tokenURL)
 	}
 	if err != nil {
 		return nil, err
@@ -101,7 +104,7 @@ func getUserEmail(accessToken string) (string, error) {
 		resp.Body.Close()
 	}()
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("Got: %d calling %s", resp.StatusCode, uri.String())
+		return "", fmt.Errorf("google - unexpected response: %d calling %s", resp.StatusCode, uri.String())
 	}
 	if err != nil {
 		return "", err
@@ -128,7 +131,7 @@ func authenticatedClient() (client *http.Client) {
 }
 
 func googleRedirect() http.Handler {
-	redirectURL := fmt.Sprintf(oauthURL, callbackURL, clientID)
+	redirectURL := fmt.Sprintf(oauthURL, googleCallbackURL, googleClientID)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, redirectURL, http.StatusFound)
 	})
@@ -137,7 +140,7 @@ func googleRedirect() http.Handler {
 func googleCallback() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		code := r.URL.Query().Get("code")
-		tokResponse, err := getTokens(clientID, clientSecret, code)
+		tokResponse, err := getTokens(googleClientID, googleClientSecret, code)
 		if err != nil {
 			log.Printf("Error getting tokens: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -224,24 +227,33 @@ func submit(adminClient *http.Client) http.Handler {
 	})
 }
 
+func authMapPage(am *AuthMap) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		enc := json.NewEncoder(w)
+		enc.Encode(am)
+		return
+	})
+}
+
 func main() {
-	m := http.NewServeMux()
-
 	adminClient := authenticatedClient()
+	groups := strings.Split(groups, ",")
+	am := &AuthMap{client: adminClient, inputGroups: groups}
+	go am.sync()
 
+	m := http.NewServeMux()
 	m.Handle("/", googleRedirect())
 	m.Handle("/callback", googleCallback())
 	m.Handle("/submit", submit(adminClient))
-	m.Handle("/authmap", authmap(adminClient, strings.Split(groups, ",")))
-
+	m.Handle("/authmap", authMapPage(am))
 	http.Handle("/__/", op.NewHandler(
 		op.NewStatus("Google ssh key manager", "Allows users to set their ssh keys and maintains a list of users/groups/keys in s3.").
 			AddOwner("Infrastructure", "#infra").
 			ReadyUseHealthCheck(),
 	),
 	)
-
 	http.Handle("/", m)
+
 	log.Println("Listening on :8080")
 	http.ListenAndServe(":8080", nil)
 }
