@@ -144,8 +144,10 @@ func (am *AuthMap) sync() {
 		case <-ticker.C:
 			gps, err := am.groupsFromGoogle()
 			if err == nil {
+				syncMutex.Lock()
 				am.Groups = gps
 				am.LastUpdated = time.Now().String()
+				syncMutex.Unlock()
 				am.postToAWS()
 			} else {
 				log.Printf("google - Error building user/group/key map: %v", err)

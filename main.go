@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -29,6 +30,8 @@ var (
 	groups             = os.Getenv("SKM_GROUPS")
 
 	scopes = []string{"https://www.googleapis.com/auth/admin.directory.user", "https://www.googleapis.com/auth/admin.directory.group.member.readonly"}
+
+	syncMutex = &sync.RWMutex{}
 )
 
 const (
@@ -229,6 +232,8 @@ func submit(adminClient *http.Client) http.Handler {
 
 func authMapPage(am *AuthMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		syncMutex.RLock()
+		defer syncMutex.RUnlock()
 		enc := json.NewEncoder(w)
 		enc.Encode(am)
 		return
