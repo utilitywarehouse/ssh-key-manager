@@ -8,6 +8,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 const (
@@ -37,50 +43,118 @@ type GoogleKeys struct {
 	SSH string `json:"ssh"`
 }
 
+type AuthMap struct {
+	LastUpdated string  `json:"lastUpdated"`
+	Groups      []Group `json:"groups"`
+	client      *http.Client
+	inputGroups []string
+}
+
 type Group struct {
 	Name string   `json:"name"`
 	Keys []string `json:"keys"`
 }
 
-func authmap(adminClient *http.Client, groups []string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var rtnGroups []Group
-		for _, g := range groups {
-			var memList GoogleMemberList
-			group := Group{Name: g, Keys: []string{}}
-			req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf(adminGroupMembersURI, g), nil)
-			resp, _ := adminClient.Do(req)
+func (am *AuthMap) groupsFromGoogle() ([]Group, error) {
+	groups := []Group{}
+	for _, g := range am.inputGroups {
+		var memList GoogleMemberList
+		group := Group{Name: g, Keys: []string{}}
+
+		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(adminGroupMembersURI, g), nil)
+		if err != nil {
+			return nil, err
+		}
+
+		resp, err := am.client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			io.Copy(ioutil.Discard, resp.Body)
+			resp.Body.Close()
+		}()
+
+		dec := json.NewDecoder(resp.Body)
+		err = dec.Decode(&memList)
+		if err != nil {
+			return nil, err
+		}
+
+		// fetch each user's key + append to map
+		for _, m := range memList.Members {
+			var adminUser GoogleAdminUser
+
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(adminUserURI, m.Email), nil)
+			if err != nil {
+				return nil, err
+			}
+
+			resp, err := am.client.Do(req)
+			if err != nil {
+				return nil, err
+			}
 			defer func() {
 				io.Copy(ioutil.Discard, resp.Body)
 				resp.Body.Close()
 			}()
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(resp.Body)
+			body := buf.Bytes()
+			json.Unmarshal(body, &adminUser)
 
-			dec := json.NewDecoder(resp.Body)
-			err := dec.Decode(&memList)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			// fetch each user's key + append to map
-			for _, m := range memList.Members {
-				var adminUser GoogleAdminUser
-				req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf(adminUserURI, m.Email), nil)
-				resp, _ := adminClient.Do(req)
-				defer func() {
-					io.Copy(ioutil.Discard, resp.Body)
-					resp.Body.Close()
-				}()
-				buf := new(bytes.Buffer)
-				buf.ReadFrom(resp.Body)
-				body := buf.Bytes()
-				json.Unmarshal(body, &adminUser)
-
-				group.Keys = append(group.Keys, adminUser.CustomSchemas.Keys.SSH)
-			}
-			rtnGroups = append(rtnGroups, group)
+			group.Keys = append(group.Keys, adminUser.CustomSchemas.Keys.SSH)
 		}
-		enc := json.NewEncoder(w)
-		enc.Encode(rtnGroups)
-		return
+		groups = append(groups, group)
+	}
+	return groups, nil
+}
+
+func (am *AuthMap) postToAWS() {
+	body, _ := json.Marshal(am)
+
+	sess, err := session.NewSession(&aws.Config{
+		Region:      aws.String("eu-west-1"),
+		Credentials: credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, ""),
 	})
+
+	if err != nil {
+		log.Printf("aws - Failed to create a session %v", err)
+		return
+	}
+
+	uploader := s3manager.NewUploader(sess)
+	_, err = uploader.Upload(&s3manager.UploadInput{
+		Bucket:      aws.String(awsBucket),
+		Key:         aws.String("authmap"),
+		Body:        bytes.NewBuffer(body),
+		ContentType: aws.String(http.DetectContentType(body)),
+	})
+	if err != nil {
+		log.Printf("aws - Failed to upload %v", err)
+	}
+}
+
+func (am *AuthMap) sync() {
+	ticker := time.NewTicker(5 * time.Minute)
+	quit := make(chan struct{})
+
+	for {
+		select {
+		case <-ticker.C:
+			gps, err := am.groupsFromGoogle()
+			if err == nil {
+				syncMutex.Lock()
+				am.Groups = gps
+				am.LastUpdated = time.Now().String()
+				syncMutex.Unlock()
+				am.postToAWS()
+			} else {
+				log.Printf("google - Error building user/group/key map: %v", err)
+			}
+		case <-quit:
+			ticker.Stop()
+			return
+		}
+	}
 }

@@ -1,0 +1,3 @@
+extract values for a given group:
+
+`curl -s https://ssh-key-manager-k8s-experimental.dev.uw.systems/authmap | jq -r '.[] | select (.name == "ssh-kube@utilitywarehouse.co.uk") | .keys[]'`
