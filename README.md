@@ -1,7 +1,7 @@
 # ssh-key-manager
 
- - allows users to set their ssh public keys against a custom field against their account in Google GSuite
- - does a periodic sync of all specified groups to get their members + their keys and serialise to a file in s3
+ - allows users to set their ssh public keys in their Google GSuite account
+ - does a periodic sync of all specified groups (members + ssh keys) from Google to AWS s3
 
 ### server
 
@@ -16,7 +16,7 @@ Required environment variables:
 | SKM_AWS_SECRET_ACCESS_KEY | xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx                                 | AWS secret access key                                                          |
 | SKM_AWS_BUCKET            | bucket-name                                                              | AWS s3 bucket name                                                             |
 | SKM_SA_KEY_LOC            | /etc/skm/sa-key.json                                                     | Location on disk where Google service account key is (json format)             |
-| SKM_GROUPS                | "ssh-kube@utilitywarehouse.co.uk"                                        | comma seperated list of groups that will be synced to s3                       |
+| SKM_GROUPS                | "group@gsuite-domain.com"                                                | comma seperated list of groups that will be synced to s3                       |
 
 ### client
 
