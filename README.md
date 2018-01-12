@@ -1,5 +1,7 @@
 # ssh-key-manager
 
+[![Docker Repository on Quay](https://quay.io/repository/utilitywarehouse/ssh-key-manager/status "Docker Repository on Quay")](https://quay.io/repository/utilitywarehouse/ssh-key-manager)
+
  - allows users to set their ssh public keys in their Google GSuite account
  - does a periodic sync of all specified groups (members + ssh keys) from Google to AWS s3
 
@@ -20,8 +22,4 @@ Required environment variables:
 
 ### client
 
-Needs `curl` and `jq`, extract ssh keys, for a group:
-
-```
-curl -s https://[app|bucket]/authmap | jq -r '.[] | select (.name == "group@gsuite-domain.com") | .keys[]'
-```
+Use https://github.com/utilitywarehouse/ssh-key-agent on your host to populate `authorized_keys`
