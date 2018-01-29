@@ -230,12 +230,42 @@ func submit(adminClient *http.Client) http.Handler {
 	})
 }
 
+func copyAuthMap(am *AuthMap) *AuthMap {
+	// We need Groups to be a new object on the copied struct
+	// so changes will not affect the original map
+	newMap := &AuthMap{}
+	newMap.LastUpdated = am.LastUpdated
+	for _, group := range am.Groups {
+		newMap.Groups = append(newMap.Groups, group)
+	}
+	newMap.client = am.client
+	newMap.inputGroups = am.inputGroups
+
+	return newMap
+}
+
+func deleteEmpty(s *[]string) {
+	var r []string
+	for _, str := range *s {
+		if str != "" {
+			r = append(r, str)
+		}
+	}
+	*s = r
+}
+
 func authMapPage(am *AuthMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		syncMutex.RLock()
 		defer syncMutex.RUnlock()
 		enc := json.NewEncoder(w)
-		enc.Encode(am)
+
+		respMap := copyAuthMap(am)
+		for i := 0; i < len(respMap.Groups); i++ {
+			deleteEmpty(&respMap.Groups[i].Keys)
+		}
+		enc.Encode(respMap)
+
 		return
 	})
 }
