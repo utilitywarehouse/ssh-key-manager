@@ -64,7 +64,7 @@ func decodeMemberList(body io.ReadCloser) (GoogleMemberList, error) {
 	return memList, err
 }
 
-func (group *Group) addSSHKeys(body io.ReadCloser, m GoogleMember) {
+func (group *Group) addSSHKeys(body io.ReadCloser) {
 	var adminUser GoogleAdminUser
 
 	buf := new(bytes.Buffer)
@@ -74,8 +74,6 @@ func (group *Group) addSSHKeys(body io.ReadCloser, m GoogleMember) {
 
 	if len(adminUser.CustomSchemas.Keys.SSH) > 0 {
 		group.Keys = append(group.Keys, adminUser.CustomSchemas.Keys.SSH)
-	} else {
-		log.Printf("Ignoring empty key for member: %s group: %s", m.Email, group.Name)
 	}
 }
 
@@ -119,7 +117,7 @@ func (am *AuthMap) groupsFromGoogle() ([]Group, error) {
 				resp.Body.Close()
 			}()
 
-			group.addSSHKeys(resp.Body, m)
+			group.addSSHKeys(resp.Body)
 		}
 		groups = append(groups, group)
 	}

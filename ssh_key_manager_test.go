@@ -38,7 +38,6 @@ func TestDecodeMemberList(t *testing.T) {
 }
 
 func TestAddSSHKeys(t *testing.T) {
-	m := &GoogleMember{"member1@uw.co.uk"}
 	group := &Group{Name: "dummy group"}
 
 	emptyKey := &GoogleKeys{SSH: ""}
@@ -46,7 +45,7 @@ func TestAddSSHKeys(t *testing.T) {
 	adminUser := &GoogleAdminUser{CustomSchemas: *schema}
 	r := encodeToReader(*adminUser)
 
-	group.addSSHKeys(r, *m)
+	group.addSSHKeys(r)
 	if len(group.Keys) > 0 {
 		t.Error("empty key!", group.Keys)
 	}
@@ -56,7 +55,7 @@ func TestAddSSHKeys(t *testing.T) {
 	adminUser = &GoogleAdminUser{CustomSchemas: *schema}
 	r = encodeToReader(*adminUser)
 
-	group.addSSHKeys(r, *m)
+	group.addSSHKeys(r)
 	if len(group.Keys) == 0 {
 		t.Error("Key not added", group.Keys)
 	}
