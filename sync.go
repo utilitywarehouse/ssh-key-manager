@@ -55,10 +55,33 @@ type Group struct {
 	Keys []string `json:"keys"`
 }
 
+func decodeMemberList(body io.ReadCloser) (GoogleMemberList, error) {
+	var memList GoogleMemberList
+
+	dec := json.NewDecoder(body)
+	err := dec.Decode(&memList)
+
+	return memList, err
+}
+
+func (group *Group) addSSHKeys(body io.ReadCloser, m GoogleMember) {
+	var adminUser GoogleAdminUser
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(body)
+	b := buf.Bytes()
+	json.Unmarshal(b, &adminUser)
+
+	if len(adminUser.CustomSchemas.Keys.SSH) > 0 {
+		group.Keys = append(group.Keys, adminUser.CustomSchemas.Keys.SSH)
+	} else {
+		log.Printf("Ignoring empty key for member: %s group: %s", m.Email, group.Name)
+	}
+}
+
 func (am *AuthMap) groupsFromGoogle() ([]Group, error) {
 	groups := []Group{}
 	for _, g := range am.inputGroups {
-		var memList GoogleMemberList
 		group := Group{Name: g, Keys: []string{}}
 
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(adminGroupMembersURI, g), nil)
@@ -75,16 +98,13 @@ func (am *AuthMap) groupsFromGoogle() ([]Group, error) {
 			resp.Body.Close()
 		}()
 
-		dec := json.NewDecoder(resp.Body)
-		err = dec.Decode(&memList)
+		memList, err := decodeMemberList(resp.Body)
 		if err != nil {
 			return nil, err
 		}
 
 		// fetch each user's key + append to map
 		for _, m := range memList.Members {
-			var adminUser GoogleAdminUser
-
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(adminUserURI, m.Email), nil)
 			if err != nil {
 				return nil, err
@@ -98,12 +118,8 @@ func (am *AuthMap) groupsFromGoogle() ([]Group, error) {
 				io.Copy(ioutil.Discard, resp.Body)
 				resp.Body.Close()
 			}()
-			buf := new(bytes.Buffer)
-			buf.ReadFrom(resp.Body)
-			body := buf.Bytes()
-			json.Unmarshal(body, &adminUser)
 
-			group.Keys = append(group.Keys, adminUser.CustomSchemas.Keys.SSH)
+			group.addSSHKeys(resp.Body, m)
 		}
 		groups = append(groups, group)
 	}
