@@ -5,31 +5,28 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"strings"
 	"testing"
 )
 
 func encodeToReader(i interface{}) io.ReadCloser {
-	b := new(bytes.Buffer)
-	enc := json.NewEncoder(b)
-	enc.Encode(i)
+	var b bytes.Buffer
 
-	return ioutil.NopCloser(strings.NewReader(b.String()))
+	json.NewEncoder(&b).Encode(i)
+	return ioutil.NopCloser(&b)
 }
 
 func TestDecodeMemberList(t *testing.T) {
-	gMember1 := &GoogleMember{"member1@uw.co.uk"}
-	gMember2 := &GoogleMember{"member2@uw.co.uk"}
-	gMemberList := &GoogleMemberList{
-		Members: []GoogleMember{*gMember1, *gMember2},
+	gMember1 := GoogleMember{"member1@uw.co.uk"}
+	gMember2 := GoogleMember{"member2@uw.co.uk"}
+	gMemberList := GoogleMemberList{
+		Members: []GoogleMember{gMember1, gMember2},
 	}
-	r := encodeToReader(*gMemberList)
+	r := encodeToReader(gMemberList)
 
 	memberList, err := decodeMemberList(r)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	if len(memberList.Members) != 2 {
@@ -38,22 +35,22 @@ func TestDecodeMemberList(t *testing.T) {
 }
 
 func TestAddSSHKeys(t *testing.T) {
-	group := &Group{Name: "dummy group"}
+	group := Group{Name: "dummy group"}
 
-	emptyKey := &GoogleKeys{SSH: ""}
-	schema := &GoogleCustomSchema{Keys: *emptyKey}
-	adminUser := &GoogleAdminUser{CustomSchemas: *schema}
-	r := encodeToReader(*adminUser)
+	emptyKey := GoogleKeys{SSH: ""}
+	schema := GoogleCustomSchema{Keys: emptyKey}
+	adminUser := GoogleAdminUser{CustomSchemas: schema}
+	r := encodeToReader(adminUser)
 
 	group.addSSHKeys(r)
 	if len(group.Keys) > 0 {
 		t.Error("empty key!", group.Keys)
 	}
 
-	dummyKey := &GoogleKeys{SSH: "dummy ssh key"}
-	schema = &GoogleCustomSchema{Keys: *dummyKey}
-	adminUser = &GoogleAdminUser{CustomSchemas: *schema}
-	r = encodeToReader(*adminUser)
+	dummyKey := GoogleKeys{SSH: "dummy ssh key"}
+	schema = GoogleCustomSchema{Keys: dummyKey}
+	adminUser = GoogleAdminUser{CustomSchemas: schema}
+	r = encodeToReader(adminUser)
 
 	group.addSSHKeys(r)
 	if len(group.Keys) == 0 {
@@ -107,7 +104,7 @@ func TestGoogleGroupsIgnoreEmptyKeys(t *testing.T) {
 
 	groups, err := am.groupsFromGoogle()
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	if len(groups) > 1 {
 		t.Error("Got more groups than input")

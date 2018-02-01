@@ -55,22 +55,20 @@ type Group struct {
 	Keys []string `json:"keys"`
 }
 
-func decodeMemberList(body io.ReadCloser) (GoogleMemberList, error) {
+func decodeMemberList(body io.Reader) (GoogleMemberList, error) {
 	var memList GoogleMemberList
-
-	dec := json.NewDecoder(body)
-	err := dec.Decode(&memList)
+	err := json.NewDecoder(body).Decode(&memList)
 
 	return memList, err
 }
 
-func (group *Group) addSSHKeys(body io.ReadCloser) {
+func (group *Group) addSSHKeys(body io.Reader) {
 	var adminUser GoogleAdminUser
 
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(body)
-	b := buf.Bytes()
-	json.Unmarshal(b, &adminUser)
+	err := json.NewDecoder(body).Decode(&adminUser)
+	if err != nil {
+		log.Printf("Fail to decode keys %v", err)
+	}
 
 	if len(adminUser.CustomSchemas.Keys.SSH) > 0 {
 		group.Keys = append(group.Keys, adminUser.CustomSchemas.Keys.SSH)
