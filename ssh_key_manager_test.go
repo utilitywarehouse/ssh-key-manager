@@ -17,10 +17,10 @@ func encodeToReader(i interface{}) io.ReadCloser {
 }
 
 func TestDecodeMemberList(t *testing.T) {
-	gMember1 := GoogleMember{"member1@uw.co.uk"}
-	gMember2 := GoogleMember{"member2@uw.co.uk"}
-	gMemberList := GoogleMemberList{
-		Members: []GoogleMember{gMember1, gMember2},
+	gMember1 := googleMember{"member1@uw.co.uk"}
+	gMember2 := googleMember{"member2@uw.co.uk"}
+	gMemberList := googleMemberList{
+		Members: []googleMember{gMember1, gMember2},
 	}
 	r := encodeToReader(gMemberList)
 
@@ -35,26 +35,26 @@ func TestDecodeMemberList(t *testing.T) {
 }
 
 func TestAddSSHKeys(t *testing.T) {
-	group := Group{Name: "dummy group"}
+	dg := group{Name: "dummy group"}
 
-	emptyKey := GoogleKeys{SSH: ""}
-	schema := GoogleCustomSchema{Keys: emptyKey}
-	adminUser := GoogleAdminUser{CustomSchemas: schema}
+	emptyKey := googleKeys{SSH: ""}
+	schema := googleCustomSchema{Keys: emptyKey}
+	adminUser := googleAdminUser{CustomSchemas: schema}
 	r := encodeToReader(adminUser)
 
-	group.addSSHKeys(r)
-	if len(group.Keys) > 0 {
-		t.Error("empty key!", group.Keys)
+	dg.addSSHKeys(r)
+	if len(dg.Keys) > 0 {
+		t.Error("empty key!", dg.Keys)
 	}
 
-	dummyKey := GoogleKeys{SSH: "dummy ssh key"}
-	schema = GoogleCustomSchema{Keys: dummyKey}
-	adminUser = GoogleAdminUser{CustomSchemas: schema}
+	dummyKey := googleKeys{SSH: "dummy ssh key"}
+	schema = googleCustomSchema{Keys: dummyKey}
+	adminUser = googleAdminUser{CustomSchemas: schema}
 	r = encodeToReader(adminUser)
 
-	group.addSSHKeys(r)
-	if len(group.Keys) == 0 {
-		t.Error("Key not added", group.Keys)
+	dg.addSSHKeys(r)
+	if len(dg.Keys) == 0 {
+		t.Error("Key not added", dg.Keys)
 	}
 }
 
@@ -73,21 +73,21 @@ func (t *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	response.Header.Set("Content-Type", "application/json")
 	if req.URL.String() == "https://www.googleapis.com/admin/directory/v1/groups/ingroup1/members" {
-		gMember1 := &GoogleMember{"member1@uw.co.uk"}
-		gMember2 := &GoogleMember{"member2@uw.co.uk"}
-		gMemberList := &GoogleMemberList{
-			Members: []GoogleMember{*gMember1, *gMember2},
+		gMember1 := &googleMember{"member1@uw.co.uk"}
+		gMember2 := &googleMember{"member2@uw.co.uk"}
+		gMemberList := &googleMemberList{
+			Members: []googleMember{*gMember1, *gMember2},
 		}
 		response.Body = encodeToReader(*gMemberList)
 	} else if req.URL.String() == "https://www.googleapis.com/admin/directory/v1/users/member1@uw.co.uk?customFieldMask=keys&projection=custom" {
-		dummyKey := &GoogleKeys{SSH: "dummy ssh key"}
-		schema := &GoogleCustomSchema{Keys: *dummyKey}
-		adminUser := &GoogleAdminUser{CustomSchemas: *schema}
+		dummyKey := &googleKeys{SSH: "dummy ssh key"}
+		schema := &googleCustomSchema{Keys: *dummyKey}
+		adminUser := &googleAdminUser{CustomSchemas: *schema}
 		response.Body = encodeToReader(*adminUser)
 	} else if req.URL.String() == "https://www.googleapis.com/admin/directory/v1/users/member2@uw.co.uk?customFieldMask=keys&projection=custom" {
-		emptyKey := &GoogleKeys{SSH: ""}
-		schema := &GoogleCustomSchema{Keys: *emptyKey}
-		adminUser := &GoogleAdminUser{CustomSchemas: *schema}
+		emptyKey := &googleKeys{SSH: ""}
+		schema := &googleCustomSchema{Keys: *emptyKey}
+		adminUser := &googleAdminUser{CustomSchemas: *schema}
 		response.Body = encodeToReader(*adminUser)
 	}
 	return response, nil
@@ -98,7 +98,7 @@ func TestGoogleGroupsIgnoreEmptyKeys(t *testing.T) {
 	client := http.DefaultClient
 	client.Transport = newMockTransport()
 
-	am := &AuthMap{client: client}
+	am := &authMap{client: client}
 	inputGroups := []string{"ingroup1"}
 	am.inputGroups = inputGroups
 
