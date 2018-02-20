@@ -21,7 +21,6 @@ const (
 	adminUserURI         = "https://www.googleapis.com/admin/directory/v1/users/%s?customFieldMask=keys&projection=custom"
 )
 
-// Google group members
 type GoogleMemberList struct {
 	Members []GoogleMember `json:"members"`
 }
@@ -30,7 +29,6 @@ type GoogleMember struct {
 	Email string `json:"email"`
 }
 
-// Google admin user
 type GoogleAdminUser struct {
 	CustomSchemas GoogleCustomSchema `json:"customSchemas"`
 }

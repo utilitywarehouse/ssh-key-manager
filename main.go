@@ -175,7 +175,7 @@ func submit(adminClient *http.Client) http.Handler {
 		err := validateKey(key)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, err = fmt.Fprintf(w, err.Error())
+			fmt.Fprintf(w, err.Error())
 			return
 		}
 
@@ -193,7 +193,7 @@ func submit(adminClient *http.Client) http.Handler {
 		key = keyParts[0] + " " + keyParts[1] + " " + email
 
 		userKeysURI := fmt.Sprintf("%s/%s", adminUserURL, email)
-		req, err := http.NewRequest(http.MethodPut, userKeysURI, strings.NewReader(fmt.Sprintf(sshKeyPostBody, key)))
+		req, _ := http.NewRequest(http.MethodPut, userKeysURI, strings.NewReader(fmt.Sprintf(sshKeyPostBody, key)))
 		req.Header.Set("content-type", "application/json")
 
 		resp, err := adminClient.Do(req)
@@ -236,7 +236,6 @@ func authMapPage(am *AuthMap) http.Handler {
 		defer syncMutex.RUnlock()
 		enc := json.NewEncoder(w)
 		enc.Encode(am)
-		return
 	})
 }
 
