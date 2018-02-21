@@ -21,49 +21,47 @@ const (
 	adminUserURI         = "https://www.googleapis.com/admin/directory/v1/users/%s?customFieldMask=keys&projection=custom"
 )
 
-// Google group members
-type GoogleMemberList struct {
-	Members []GoogleMember `json:"members"`
+type googleMemberList struct {
+	Members []googleMember `json:"members"`
 }
 
-type GoogleMember struct {
+type googleMember struct {
 	Email string `json:"email"`
 }
 
-// Google admin user
-type GoogleAdminUser struct {
-	CustomSchemas GoogleCustomSchema `json:"customSchemas"`
+type googleAdminUser struct {
+	CustomSchemas googleCustomSchema `json:"customSchemas"`
 }
 
-type GoogleCustomSchema struct {
-	Keys GoogleKeys `json:"keys"`
+type googleCustomSchema struct {
+	Keys googleKeys `json:"keys"`
 }
 
-type GoogleKeys struct {
+type googleKeys struct {
 	SSH string `json:"ssh"`
 }
 
-type AuthMap struct {
+type authMap struct {
 	LastUpdated string  `json:"lastUpdated"`
-	Groups      []Group `json:"groups"`
+	Groups      []group `json:"groups"`
 	client      *http.Client
 	inputGroups []string
 }
 
-type Group struct {
+type group struct {
 	Name string   `json:"name"`
 	Keys []string `json:"keys"`
 }
 
-func decodeMemberList(body io.Reader) (GoogleMemberList, error) {
-	var memList GoogleMemberList
+func decodeMemberList(body io.Reader) (googleMemberList, error) {
+	var memList googleMemberList
 	err := json.NewDecoder(body).Decode(&memList)
 
 	return memList, err
 }
 
-func (group *Group) addSSHKeys(body io.Reader) {
-	var adminUser GoogleAdminUser
+func (group *group) addSSHKeys(body io.Reader) {
+	var adminUser googleAdminUser
 
 	err := json.NewDecoder(body).Decode(&adminUser)
 	if err != nil {
@@ -75,10 +73,10 @@ func (group *Group) addSSHKeys(body io.Reader) {
 	}
 }
 
-func (am *AuthMap) groupsFromGoogle() ([]Group, error) {
-	groups := []Group{}
+func (am *authMap) groupsFromGoogle() ([]group, error) {
+	groups := []group{}
 	for _, g := range am.inputGroups {
-		group := Group{Name: g, Keys: []string{}}
+		grp := group{Name: g, Keys: []string{}}
 
 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(adminGroupMembersURI, g), nil)
 		if err != nil {
@@ -115,14 +113,14 @@ func (am *AuthMap) groupsFromGoogle() ([]Group, error) {
 				resp.Body.Close()
 			}()
 
-			group.addSSHKeys(resp.Body)
+			grp.addSSHKeys(resp.Body)
 		}
-		groups = append(groups, group)
+		groups = append(groups, grp)
 	}
 	return groups, nil
 }
 
-func (am *AuthMap) postToAWS() {
+func (am *authMap) postToAWS() {
 	body, _ := json.Marshal(am)
 
 	sess, err := session.NewSession(&aws.Config{
@@ -147,7 +145,7 @@ func (am *AuthMap) postToAWS() {
 	}
 }
 
-func (am *AuthMap) sync() {
+func (am *authMap) sync() {
 	ticker := time.NewTicker(5 * time.Minute)
 	quit := make(chan struct{})
 

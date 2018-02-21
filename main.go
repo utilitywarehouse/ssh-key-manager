@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"golang.org/x/oauth2"
+	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 
 	"github.com/utilitywarehouse/go-operational/op"
@@ -54,18 +54,18 @@ const (
 `
 )
 
-type UserInfo struct {
+type userInfo struct {
 	Email string `json:"email"`
 }
 
-type TokenResponse struct {
+type tokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	IDToken      string `json:"id_token"`
 }
 
 // Get the id_token and refresh_token from google
-func getTokens(clientID, clientSecret, code string) (*TokenResponse, error) {
+func getTokens(clientID, clientSecret, code string) (*tokenResponse, error) {
 	val := url.Values{}
 	val.Add("grant_type", "authorization_code")
 	val.Add("redirect_uri", googleCallbackURL)
@@ -87,7 +87,7 @@ func getTokens(clientID, clientSecret, code string) (*TokenResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	tr := &TokenResponse{}
+	tr := &tokenResponse{}
 	err = json.NewDecoder(resp.Body).Decode(tr)
 	if err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func getUserEmail(accessToken string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	ui := &UserInfo{}
+	ui := &userInfo{}
 	err = json.NewDecoder(resp.Body).Decode(ui)
 	if err != nil {
 		return "", err
@@ -130,7 +130,7 @@ func authenticatedClient() (client *http.Client) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return conf.Client(oauth2.NoContext)
+	return conf.Client(context.TODO())
 }
 
 func googleRedirect() http.Handler {
@@ -175,7 +175,7 @@ func submit(adminClient *http.Client) http.Handler {
 		err := validateKey(key)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, err = fmt.Fprintf(w, err.Error())
+			fmt.Fprintf(w, err.Error())
 			return
 		}
 
@@ -193,7 +193,7 @@ func submit(adminClient *http.Client) http.Handler {
 		key = keyParts[0] + " " + keyParts[1] + " " + email
 
 		userKeysURI := fmt.Sprintf("%s/%s", adminUserURL, email)
-		req, err := http.NewRequest(http.MethodPut, userKeysURI, strings.NewReader(fmt.Sprintf(sshKeyPostBody, key)))
+		req, _ := http.NewRequest(http.MethodPut, userKeysURI, strings.NewReader(fmt.Sprintf(sshKeyPostBody, key)))
 		req.Header.Set("content-type", "application/json")
 
 		resp, err := adminClient.Do(req)
@@ -230,20 +230,19 @@ func submit(adminClient *http.Client) http.Handler {
 	})
 }
 
-func authMapPage(am *AuthMap) http.Handler {
+func authMapPage(am *authMap) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		syncMutex.RLock()
 		defer syncMutex.RUnlock()
 		enc := json.NewEncoder(w)
 		enc.Encode(am)
-		return
 	})
 }
 
 func main() {
 	adminClient := authenticatedClient()
 	groups := strings.Split(groups, ",")
-	am := &AuthMap{client: adminClient, inputGroups: groups}
+	am := &authMap{client: adminClient, inputGroups: groups}
 	go am.sync()
 
 	m := http.NewServeMux()
