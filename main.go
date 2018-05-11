@@ -15,8 +15,6 @@ import (
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
-
-	"github.com/utilitywarehouse/go-operational/op"
 )
 
 var (
@@ -250,12 +248,6 @@ func main() {
 	m.Handle("/callback", googleCallback())
 	m.Handle("/submit", submit(adminClient))
 	m.Handle("/authmap", authMapPage(am))
-	http.Handle("/__/", op.NewHandler(
-		op.NewStatus("Google ssh key manager", "Allows users to set their ssh keys and maintains a list of users/groups/keys in s3.").
-			AddOwner("Infrastructure", "#infra").
-			ReadyUseHealthCheck(),
-	),
-	)
 	http.Handle("/", m)
 
 	log.Println("Listening on :8080")
