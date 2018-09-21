@@ -17,25 +17,11 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-var (
-	googleClientID     = os.Getenv("SKM_CLIENT_ID")
-	googleClientSecret = os.Getenv("SKM_CLIENT_SECRET")
-	googleCallbackURL  = os.Getenv("SKM_CALLBACK_URL")
-	awsAccessKey       = os.Getenv("SKM_AWS_ACCESS_KEY_ID")
-	awsSecretKey       = os.Getenv("SKM_AWS_SECRET_ACCESS_KEY")
-	awsBucket          = os.Getenv("SKM_AWS_BUCKET")
-	saKeyLoc           = os.Getenv("SKM_SA_KEY_LOC")
-	groups             = os.Getenv("SKM_GROUPS")
-
-	scopes = []string{"https://www.googleapis.com/auth/admin.directory.user", "https://www.googleapis.com/auth/admin.directory.group.member.readonly"}
-
-	syncMutex = &sync.RWMutex{}
-)
-
+// ref: https://accounts.google.com/.well-known/openid-configuration
 const (
 	oauthURL       = "https://accounts.google.com/o/oauth2/auth?redirect_uri=%s&response_type=code&client_id=%s&scope=openid+email+profile&approval_prompt=force&access_type=offline"
-	tokenURL       = "https://www.googleapis.com/oauth2/v3/token"
-	userInfoURL    = "https://www.googleapis.com/oauth2/v1/userinfo"
+	tokenURL       = "https://oauth2.googleapis.com/token"
+	userInfoURL    = "https://www.googleapis.com/oauth2/v3/userinfo"
 	adminUserURL   = "https://www.googleapis.com/admin/directory/v1/users"
 	sshKeyPostBody = `{"customSchemas":{"keys":{"ssh":"%s"}}}`
 	form           = `<!DOCTYPE html>
@@ -50,6 +36,21 @@ const (
 </body>
 </html>
 `
+)
+
+var (
+	googleClientID     = os.Getenv("SKM_CLIENT_ID")
+	googleClientSecret = os.Getenv("SKM_CLIENT_SECRET")
+	googleCallbackURL  = os.Getenv("SKM_CALLBACK_URL")
+	awsAccessKey       = os.Getenv("SKM_AWS_ACCESS_KEY_ID")
+	awsSecretKey       = os.Getenv("SKM_AWS_SECRET_ACCESS_KEY")
+	awsBucket          = os.Getenv("SKM_AWS_BUCKET")
+	saKeyLoc           = os.Getenv("SKM_SA_KEY_LOC")
+	groups             = os.Getenv("SKM_GROUPS")
+
+	scopes = []string{"https://www.googleapis.com/auth/admin.directory.user", "https://www.googleapis.com/auth/admin.directory.group.member.readonly"}
+
+	syncMutex = &sync.RWMutex{}
 )
 
 type userInfo struct {
