@@ -47,6 +47,7 @@ var (
 	awsBucket          = os.Getenv("SKM_AWS_BUCKET")
 	saKeyLoc           = os.Getenv("SKM_SA_KEY_LOC")
 	groups             = os.Getenv("SKM_GROUPS")
+	adminEmail         = os.Getenv("SKM_ADMIN_EMAIL")
 
 	scopes = []string{"https://www.googleapis.com/auth/admin.directory.user", "https://www.googleapis.com/auth/admin.directory.group.member.readonly"}
 
@@ -125,7 +126,7 @@ func authenticatedClient() (client *http.Client) {
 		log.Fatal(err)
 	}
 	conf, err := google.JWTConfigFromJSON(data, scopes...)
-	conf.Subject = "mdonat@utilitywarehouse.co.uk"
+	conf.Subject = adminEmail
 	if err != nil {
 		log.Fatal(err)
 	}

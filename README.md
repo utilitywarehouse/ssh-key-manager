@@ -19,6 +19,7 @@ Required environment variables:
 | SKM_AWS_BUCKET            | bucket-name                     | AWS s3 bucket name                                                             |
 | SKM_SA_KEY_LOC            | /etc/skm/sa-key.json            | Location on disk where Google service account key is (json format)             |
 | SKM_GROUPS                | "group@gsuite-domain.com"       | comma seperated list of groups that will be synced to s3                       |
+| SKM_ADMIN_EMAIL           | "admin-user@gsuite-domain.com"  | A G-Suite admin user                       |
 
 ### client
 
