@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -42,8 +43,7 @@ var (
 	googleClientID     = os.Getenv("SKM_CLIENT_ID")
 	googleClientSecret = os.Getenv("SKM_CLIENT_SECRET")
 	googleCallbackURL  = os.Getenv("SKM_CALLBACK_URL")
-	awsAccessKey       = os.Getenv("SKM_AWS_ACCESS_KEY_ID")
-	awsSecretKey       = os.Getenv("SKM_AWS_SECRET_ACCESS_KEY")
+	googleAdminEmail   = os.Getenv("SKM_ADMIN_EMAIL")
 	awsBucket          = os.Getenv("SKM_AWS_BUCKET")
 	saKeyLoc           = os.Getenv("SKM_SA_KEY_LOC")
 	groups             = os.Getenv("SKM_GROUPS")
@@ -61,6 +61,47 @@ type tokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	IDToken      string `json:"id_token"`
+}
+
+// Validate arguments
+func validate() {
+	var err error
+
+	// Client ID
+	clientIDRegex := regexp.MustCompile("^.*apps.googleusercontent.com$")
+	if !clientIDRegex.MatchString(googleClientID) {
+		log.Fatalln(googleClientID + " is not a valid client ID")
+	}
+
+	// Client secret
+	if googleClientSecret == "" {
+		log.Fatalln("client secret must not be empty")
+	}
+
+	// Callback URL
+	u, err := url.ParseRequestURI(googleCallbackURL)
+	if err != nil || (u.Host == "" || u.Scheme == "") {
+		log.Fatalln(googleCallbackURL + " is not a valid URI")
+	}
+
+	// Admin email string
+	emailRegex := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	if len(googleAdminEmail) > 254 || !emailRegex.MatchString(googleAdminEmail) {
+		log.Fatalln(googleAdminEmail + " is not a valid email address")
+	}
+
+	// AWS S3 bucket
+	if awsBucket == "" {
+		log.Fatalln("SKM_AWS_BUCKET must not be empty")
+	}
+
+	// SA key location
+	_, err = os.Stat(saKeyLoc)
+	if os.IsNotExist(err) {
+		log.Fatalln(saKeyLoc + " does not exist")
+	} else if err != nil {
+		log.Fatalln("can't stat " + saKeyLoc)
+	}
 }
 
 // Get the id_token and refresh_token from google
@@ -125,7 +166,7 @@ func authenticatedClient() (client *http.Client) {
 		log.Fatal(err)
 	}
 	conf, err := google.JWTConfigFromJSON(data, scopes...)
-	conf.Subject = "mdonat@utilitywarehouse.co.uk"
+	conf.Subject = googleAdminEmail
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -239,8 +280,14 @@ func authMapPage(am *authMap) http.Handler {
 }
 
 func main() {
+	validate()
+
 	adminClient := authenticatedClient()
 	groups := strings.Split(groups, ",")
+	if len(groups) == 0 {
+		log.Fatalln("SKM_GROUPS can't be empty")
+	}
+
 	am := &authMap{client: adminClient, inputGroups: groups}
 	go am.sync()
 
