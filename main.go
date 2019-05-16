@@ -44,8 +44,6 @@ var (
 	googleClientSecret = os.Getenv("SKM_CLIENT_SECRET")
 	googleCallbackURL  = os.Getenv("SKM_CALLBACK_URL")
 	googleAdminEmail   = os.Getenv("SKM_ADMIN_EMAIL")
-	awsAccessKey       = os.Getenv("SKM_AWS_ACCESS_KEY_ID")
-	awsSecretKey       = os.Getenv("SKM_AWS_SECRET_ACCESS_KEY")
 	awsBucket          = os.Getenv("SKM_AWS_BUCKET")
 	saKeyLoc           = os.Getenv("SKM_SA_KEY_LOC")
 	groups             = os.Getenv("SKM_GROUPS")

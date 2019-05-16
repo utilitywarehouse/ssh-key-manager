@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
@@ -123,10 +122,7 @@ func (am *authMap) groupsFromGoogle() ([]group, error) {
 func (am *authMap) postToAWS() {
 	body, _ := json.Marshal(am)
 
-	sess, err := session.NewSession(&aws.Config{
-		Region:      aws.String("eu-west-1"),
-		Credentials: credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, ""),
-	})
+	sess, err := session.NewSession(&aws.Config{})
 
 	if err != nil {
 		log.Printf("aws - Failed to create a session %v", err)
