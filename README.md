@@ -19,6 +19,8 @@ Required environment variables:
 | SKM_GROUPS                | "group@gsuite-domain.com"       | comma seperated list of groups that will be synced to s3                       |
 | SKM_ADMIN_EMAIL           | "admin-user@gsuite-domain.com"  | A G-Suite admin user                       |
 
+You will also need to configure the appropriate AWS credentials for your environment, as detailed [on this page](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials).
+
 ### client
 
 Use https://github.com/utilitywarehouse/ssh-key-agent on your host to populate `authorized_keys`
