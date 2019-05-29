@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -91,6 +92,13 @@ func (am *authMap) groupsFromGoogle() ([]group, error) {
 			resp.Body.Close()
 		}()
 
+		if resp.StatusCode != 200 {
+			var body bytes.Buffer
+			body.ReadFrom(resp.Body)
+
+			return nil, errors.New(body.String())
+		}
+
 		memList, err := decodeMemberList(resp.Body)
 		if err != nil {
 			return nil, err
@@ -111,6 +119,13 @@ func (am *authMap) groupsFromGoogle() ([]group, error) {
 				io.Copy(ioutil.Discard, resp.Body)
 				resp.Body.Close()
 			}()
+
+			if resp.StatusCode != 200 {
+				var body bytes.Buffer
+				body.ReadFrom(resp.Body)
+
+				return nil, errors.New(body.String())
+			}
 
 			grp.addSSHKeys(resp.Body)
 		}
