@@ -142,15 +142,15 @@ func getUserEmail(accessToken string) (string, error) {
 	q.Set("access_token", accessToken)
 	uri.RawQuery = q.Encode()
 	resp, err := http.Get(uri.String())
+	if err != nil {
+		return "", err
+	}
 	defer func() {
 		io.Copy(ioutil.Discard, resp.Body)
 		resp.Body.Close()
 	}()
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("google - unexpected response: %d calling %s", resp.StatusCode, uri.String())
-	}
-	if err != nil {
-		return "", err
 	}
 	ui := &userInfo{}
 	err = json.NewDecoder(resp.Body).Decode(ui)
@@ -237,6 +237,11 @@ func submit(adminClient *http.Client) http.Handler {
 		req.Header.Set("content-type", "application/json")
 
 		resp, err := adminClient.Do(req)
+		if err != nil {
+			log.Printf("Failed to make a PUT request to update user: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		defer func() {
 			io.Copy(ioutil.Discard, resp.Body)
 			resp.Body.Close()
@@ -245,11 +250,7 @@ func submit(adminClient *http.Client) http.Handler {
 		buf := new(bytes.Buffer)
 		buf.ReadFrom(resp.Body)
 		body := buf.Bytes()
-		if err != nil {
-			log.Printf("Failed to make a PUT request to update user: %s in google with ssh key", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+
 		if resp.StatusCode != 200 {
 			log.Printf("Got: %d calling: %s body: %s", resp.StatusCode, userKeysURI, body)
 			w.WriteHeader(http.StatusInternalServerError)
