@@ -1,9 +1,10 @@
 # ssh-key-manager
 
-[![Docker Repository on Quay](https://quay.io/repository/utilitywarehouse/ssh-key-manager/status "Docker Repository on Quay")](https://quay.io/repository/utilitywarehouse/ssh-key-manager)
+[![Build Status](https://drone.prod.merit.uw.systems/api/badges/utilitywarehouse/ssh-key-manager/status.svg)](https://drone.prod.merit.uw.systems/utilitywarehouse/ssh-key-manager)
 
- - allows users to set their ssh public keys in their Google GSuite account
- - does a periodic sync of all specified groups (members + ssh keys) from Google to AWS s3
+- allows users to set their ssh public keys in their Google GSuite account
+- does a periodic sync of all specified groups (members + ssh keys) from
+  Google to AWS s3
 
 ### server
 
@@ -19,8 +20,11 @@ Required environment variables:
 | SKM_GROUPS                | "group@gsuite-domain.com"       | comma seperated list of groups that will be synced to s3                       |
 | SKM_ADMIN_EMAIL           | "admin-user@gsuite-domain.com"  | A G-Suite admin user                       |
 
-You will also need to configure the appropriate AWS credentials for your environment, as detailed [on this page](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials).
+You will also need to configure the appropriate AWS credentials for your
+environment, as detailed [on this
+page](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials).
 
 ### client
 
-Use https://github.com/utilitywarehouse/ssh-key-agent on your host to populate `authorized_keys`
+Use https://github.com/utilitywarehouse/ssh-key-agent on your host to populate
+`authorized_keys`

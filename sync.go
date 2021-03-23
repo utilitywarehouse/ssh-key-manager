@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -88,7 +87,7 @@ func (am *authMap) groupsFromGoogle() ([]group, error) {
 			return nil, err
 		}
 		defer func() {
-			io.Copy(ioutil.Discard, resp.Body)
+			io.Copy(io.Discard, resp.Body)
 			resp.Body.Close()
 		}()
 
@@ -116,7 +115,7 @@ func (am *authMap) groupsFromGoogle() ([]group, error) {
 				return nil, err
 			}
 			defer func() {
-				io.Copy(ioutil.Discard, resp.Body)
+				io.Copy(io.Discard, resp.Body)
 				resp.Body.Close()
 			}()
 
