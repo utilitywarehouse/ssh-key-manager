@@ -36,7 +36,8 @@ const (
 </body>
 </html>
 `
-	emailRegexStr = "^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+	// http://emailregex.com/
+	emailRegexStr = "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$"
 )
 
 var (
@@ -111,10 +112,10 @@ func fmtGroups() []string {
 		log.Fatalln("SKM_GROUPS can't be empty")
 	}
 
-	for i, g := range groups {
+	for i, _ := range groups {
 		groups[i] = strings.TrimSpace(groups[i])
-		if !emailRegex.MatchString(g) {
-			log.Fatalf("Group is not a valid email: group=%s\n", g)
+		if !emailRegex.MatchString(groups[i]) {
+			log.Fatalf("Group is not a valid email: group=%s\n", groups[i])
 		}
 	}
 	return groups
