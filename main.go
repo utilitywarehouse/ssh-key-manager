@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -118,7 +117,7 @@ func getTokens(clientID, clientSecret, code string) (*tokenResponse, error) {
 		return nil, err
 	}
 	defer func() {
-		io.Copy(ioutil.Discard, resp.Body)
+		io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 	}()
 	if resp.StatusCode != 200 {
@@ -146,7 +145,7 @@ func getUserEmail(accessToken string) (string, error) {
 		return "", err
 	}
 	defer func() {
-		io.Copy(ioutil.Discard, resp.Body)
+		io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 	}()
 	if resp.StatusCode != 200 {
@@ -161,7 +160,7 @@ func getUserEmail(accessToken string) (string, error) {
 }
 
 func authenticatedClient() (client *http.Client) {
-	data, err := ioutil.ReadFile(saKeyLoc)
+	data, err := os.ReadFile(saKeyLoc)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -243,7 +242,7 @@ func submit(adminClient *http.Client) http.Handler {
 			return
 		}
 		defer func() {
-			io.Copy(ioutil.Discard, resp.Body)
+			io.Copy(io.Discard, resp.Body)
 			resp.Body.Close()
 		}()
 

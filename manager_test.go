@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 )
@@ -13,7 +12,7 @@ func encodeToReader(i interface{}) io.ReadCloser {
 	var b bytes.Buffer
 
 	json.NewEncoder(&b).Encode(i)
-	return ioutil.NopCloser(&b)
+	return io.NopCloser(&b)
 }
 
 func TestDecodeMemberList(t *testing.T) {
