@@ -36,6 +36,8 @@ const (
 </body>
 </html>
 `
+	// http://emailregex.com/
+	emailRegexStr = "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$"
 )
 
 var (
@@ -50,6 +52,8 @@ var (
 	scopes = []string{"https://www.googleapis.com/auth/admin.directory.user", "https://www.googleapis.com/auth/admin.directory.group.member.readonly"}
 
 	syncMutex = &sync.RWMutex{}
+
+	emailRegex = regexp.MustCompile(emailRegexStr)
 )
 
 type userInfo struct {
@@ -84,7 +88,6 @@ func validate() {
 	}
 
 	// Admin email string
-	emailRegex := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 	if len(googleAdminEmail) > 254 || !emailRegex.MatchString(googleAdminEmail) {
 		log.Fatalln(googleAdminEmail + " is not a valid email address")
 	}
@@ -101,6 +104,21 @@ func validate() {
 	} else if err != nil {
 		log.Fatalln("can't stat " + saKeyLoc)
 	}
+}
+
+func fmtGroups() []string {
+	groups := strings.Split(groups, " ")
+	if len(groups) == 0 {
+		log.Fatalln("SKM_GROUPS can't be empty")
+	}
+
+	for i, _ := range groups {
+		groups[i] = strings.TrimSpace(groups[i])
+		if !emailRegex.MatchString(groups[i]) {
+			log.Fatalf("Group is not a valid email: group=%s\n", groups[i])
+		}
+	}
+	return groups
 }
 
 // Get the id_token and refresh_token from google
@@ -282,11 +300,8 @@ func authMapPage(am *authMap) http.Handler {
 func main() {
 	validate()
 
+	groups := fmtGroups()
 	adminClient := authenticatedClient()
-	groups := strings.Split(groups, ",")
-	if len(groups) == 0 {
-		log.Fatalln("SKM_GROUPS can't be empty")
-	}
 
 	am := &authMap{client: adminClient, inputGroups: groups}
 	go am.sync()
