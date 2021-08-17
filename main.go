@@ -71,7 +71,7 @@ func validate() {
 	var err error
 
 	// Client ID
-	clientIDRegex := regexp.MustCompile("^.*apps.googleusercontent.com$")
+	clientIDRegex := regexp.MustCompile("^.*apps\\.googleusercontent\\.com$")
 	if !clientIDRegex.MatchString(googleClientID) {
 		log.Fatalln(googleClientID + " is not a valid client ID")
 	}
