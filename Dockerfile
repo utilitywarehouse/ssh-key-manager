@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine AS build
+FROM golang:1.17-alpine AS build
 WORKDIR /go/src/github.com/utilitywarehouse/ssh-key-manager
 COPY . /go/src/github.com/utilitywarehouse/ssh-key-manager
 RUN apk --no-cache add git gcc musl-dev \
