@@ -1,10 +1,17 @@
 module github.com/utilitywarehouse/ssh-key-manager
 
-go 1.16
+go 1.17
 
 require (
-	cloud.google.com/go v0.85.0 // indirect
-	github.com/aws/aws-sdk-go v1.38.70
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
-	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
+	github.com/aws/aws-sdk-go v1.43.25
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a
+)
+
+require (
+	cloud.google.com/go/compute v1.5.0 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
 )
