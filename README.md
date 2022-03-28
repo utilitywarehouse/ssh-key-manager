@@ -1,7 +1,5 @@
 # ssh-key-manager
 
-[![Build Status](https://drone.prod.merit.uw.systems/api/badges/utilitywarehouse/ssh-key-manager/status.svg)](https://drone.prod.merit.uw.systems/utilitywarehouse/ssh-key-manager)
-
 - allows users to set their ssh public keys in their Google GSuite account
 - does a periodic sync of all specified groups (members + ssh keys) from
   Google to AWS s3
