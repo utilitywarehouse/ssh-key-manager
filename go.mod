@@ -4,12 +4,12 @@ go 1.18
 
 require (
 	github.com/aws/aws-sdk-go v1.44.46
-	golang.org/x/net v0.0.0-20220325170049-de3da57026de
-	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a
+	golang.org/x/net v0.0.0-20220630215102-69896b714898
+	golang.org/x/oauth2 v0.0.0-20220630143837-2104d58473e0
 )
 
 require (
-	cloud.google.com/go/compute v1.5.0 // indirect
+	cloud.google.com/go/compute v1.7.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
