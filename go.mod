@@ -3,8 +3,8 @@ module github.com/utilitywarehouse/ssh-key-manager
 go 1.18
 
 require (
-	github.com/aws/aws-sdk-go v1.44.127
-	golang.org/x/net v0.0.0-20220630215102-69896b714898
+	github.com/aws/aws-sdk-go v1.44.150
+	golang.org/x/net v0.1.0
 	golang.org/x/oauth2 v0.0.0-20220630143837-2104d58473e0
 )
 
