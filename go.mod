@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/aws/aws-sdk-go v1.44.253
-	golang.org/x/net v0.8.0
+	golang.org/x/net v0.9.0
 	golang.org/x/oauth2 v0.6.0
 )
 
