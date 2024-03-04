@@ -1,6 +1,6 @@
 module github.com/utilitywarehouse/ssh-key-manager
 
-go 1.22
+go 1.22.0
 
 require (
 	github.com/aws/aws-sdk-go v1.50.30
