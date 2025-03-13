@@ -5,7 +5,7 @@ toolchain go1.23.6
 
 require (
 	github.com/aws/aws-sdk-go v1.55.6
-	golang.org/x/net v0.35.0
+	golang.org/x/net v0.36.0
 	golang.org/x/oauth2 v0.27.0
 )
 
