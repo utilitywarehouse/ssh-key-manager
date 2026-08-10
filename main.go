@@ -232,7 +232,7 @@ func submit(adminClient *http.Client) http.Handler {
 		err := validateKey(key)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, err.Error())
+			fmt.Fprint(w, err.Error())
 			return
 		}
 
